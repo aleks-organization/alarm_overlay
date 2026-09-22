@@ -6,10 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
-import android.media.AudioAttributes
 import android.media.AudioManager
-import android.media.MediaPlayer
-import android.media.RingtoneManager
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -24,15 +21,10 @@ import java.util.Date
 import java.util.Locale
 
 class AlarmActivity : Activity() {
-    private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
-    private var audioManager: AudioManager? = null
-    private var originalAlarmVolume: Int = -1
     private var alarmId: Int = 0
     private var alarmTime: Long = 0L
     private var alarmLabel: String = "Alarm"
-    private var alarmSound: String? = null
-    private var alarmVolume: Float = 1f
 
     companion object {
         @Volatile
@@ -52,23 +44,21 @@ class AlarmActivity : Activity() {
         alarmId = intent.getIntExtra("alarm_id", 0)
         alarmTime = intent.getLongExtra("alarm_time", 0L)
         alarmLabel = intent.getStringExtra("alarm_label") ?: "Alarm"
-        alarmSound = intent.getStringExtra("alarm_sound")
-        alarmVolume = intent.getFloatExtra("alarm_volume", 1f)
 
         // Volume rocker controls the alarm stream while the alarm is ringing
         volumeControlStream = AudioManager.STREAM_ALARM
 
         setupLockScreenDisplay()
         buildUI()
-        startAlarmSound()
         startVibration()
     }
 
     private fun dismissActivity() {
-        stopAlarmSound()
+        AlarmRingingService.stopRing(this)
         stopVibration()
         try {
             val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            nm.cancel(AlarmRingingService.NOTIF_ID)
             nm.cancel(alarmId)
         } catch (_: Exception) {
         }
@@ -175,72 +165,6 @@ class AlarmActivity : Activity() {
         }
     }
 
-    private fun startAlarmSound() {
-        try {
-            audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            val maxVolume =
-                audioManager?.getStreamMaxVolume(AudioManager.STREAM_ALARM) ?: 0
-            originalAlarmVolume =
-                audioManager?.getStreamVolume(AudioManager.STREAM_ALARM) ?: -1
-            // Apply the alarm's configured volume. If it differs from the current
-            // stream volume (e.g. muted by vibrate mode), adjust it temporarily.
-            val desiredVolume = (maxVolume * alarmVolume).toInt().coerceIn(0, maxVolume)
-            if (desiredVolume != originalAlarmVolume) {
-                audioManager?.setStreamVolume(AudioManager.STREAM_ALARM, desiredVolume, 0)
-            }
-
-            mediaPlayer = MediaPlayer()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                mediaPlayer?.setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
-            } else {
-                @Suppress("DEPRECATION")
-                mediaPlayer?.setAudioStreamType(AudioManager.STREAM_ALARM)
-            }
-
-            val soundFile = alarmSound ?: "over_the_horizon.mp3"
-            val afd = assets.openFd(soundFile)
-            mediaPlayer?.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-            mediaPlayer?.prepare()
-            mediaPlayer?.isLooping = true
-            mediaPlayer?.start()
-        } catch (e: Exception) {
-            playSystemAlarm()
-        }
-    }
-
-    private fun playSystemAlarm() {
-        try {
-            mediaPlayer?.release()
-            mediaPlayer = MediaPlayer().apply {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                    setAudioAttributes(
-                        AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_ALARM)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .build()
-                    )
-                } else {
-                    @Suppress("DEPRECATION")
-                    setAudioStreamType(AudioManager.STREAM_ALARM)
-                }
-                setDataSource(
-                    this@AlarmActivity,
-                    RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                )
-                isLooping = true
-                prepare()
-                start()
-            }
-        } catch (e2: Exception) {
-            e2.printStackTrace()
-        }
-    }
-
     private fun startVibration() {
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vm = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager
@@ -260,7 +184,7 @@ class AlarmActivity : Activity() {
     }
 
     private fun dismissAlarm() {
-        stopAlarmSound()
+        AlarmRingingService.stopRing(this)
         stopVibration()
         AlarmScheduler.dismiss(this, alarmId)
         notifyFlutter("close")
@@ -268,7 +192,7 @@ class AlarmActivity : Activity() {
     }
 
     private fun snoozeAlarm() {
-        stopAlarmSound()
+        AlarmRingingService.stopRing(this)
         stopVibration()
         AlarmScheduler.snooze(this, alarmId)
         notifyFlutter("snooze")
@@ -282,32 +206,6 @@ class AlarmActivity : Activity() {
             )
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-    }
-
-    private fun stopAlarmSound() {
-        mediaPlayer?.let {
-            try {
-                if (it.isPlaying) it.stop()
-                it.release()
-            } catch (_: Exception) {
-            }
-        }
-        mediaPlayer = null
-        restoreAlarmVolume()
-    }
-
-    private fun restoreAlarmVolume() {
-        if (originalAlarmVolume >= 0) {
-            try {
-                audioManager?.setStreamVolume(
-                    AudioManager.STREAM_ALARM,
-                    originalAlarmVolume,
-                    0
-                )
-            } catch (_: Exception) {
-            }
-            originalAlarmVolume = -1
         }
     }
 
@@ -326,7 +224,6 @@ class AlarmActivity : Activity() {
         if (activeInstance === this) {
             activeInstance = null
         }
-        stopAlarmSound()
         stopVibration()
     }
 

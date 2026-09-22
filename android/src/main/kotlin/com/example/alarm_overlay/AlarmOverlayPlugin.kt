@@ -72,6 +72,7 @@ class AlarmOverlayPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Event
             }
             "stopOverlay" -> {
                 AlarmActivity.dismissActive()
+                ctx.stopService(Intent(ctx, AlarmRingingService::class.java))
                 result.success(true)
             }
             "hasOverlayPermission" -> result.success(hasPermission(ctx))
