@@ -2,9 +2,7 @@ package com.example.alarm_overlay
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.provider.Settings
 import androidx.annotation.NonNull
 import androidx.core.app.NotificationManagerCompat
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -95,18 +93,8 @@ class AlarmOverlayPlugin : FlutterPlugin, MethodChannel.MethodCallHandler, Event
     }
 
     private fun requestPermission(ctx: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            try {
-                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                    .putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                ctx.startActivity(intent)
-            } catch (e: Exception) {
-                val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                ctx.startActivity(intent)
-            }
-        }
+        // The app requests POST_NOTIFICATIONS via permission_handler (runtime
+        // dialog). Opening the notification settings screen here is not needed.
     }
 
     companion object {
