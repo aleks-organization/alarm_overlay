@@ -122,6 +122,7 @@ class AlarmRingingService : Service() {
             .setContentIntent(contentPending)
             .setCustomContentView(collapsedView)
             .setCustomBigContentView(bigView)
+            .setCustomHeadsUpContentView(collapsedView)
             .addAction(
                 NotificationCompat.Action.Builder(
                     android.R.drawable.ic_lock_idle_alarm,
