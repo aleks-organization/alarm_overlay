@@ -105,6 +105,12 @@ class AlarmRingingService : Service() {
         val dismissPending = buildActionPending(AlarmActionReceiver.ACTION_CLOSE)
         val contentPending = buildContentPending()
 
+        // Custom content views with always-visible SNOOZE/DISMISS buttons.
+        val collapsedView = buildContentView(R.layout.alarm_notification, alarmTime, alarmLabel)
+        val bigView = buildContentView(R.layout.alarm_notification_big, alarmTime, alarmLabel)
+        bindButtons(collapsedView, snoozePending, dismissPending)
+        bindButtons(bigView, snoozePending, dismissPending)
+
         return NotificationCompat.Builder(this, OverlayAlarmReceiver.ALARM_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_dialog_alert)
             .setContentTitle("Alarm")
@@ -114,6 +120,8 @@ class AlarmRingingService : Service() {
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setOngoing(true)
             .setContentIntent(contentPending)
+            .setCustomContentView(collapsedView)
+            .setCustomBigContentView(bigView)
             .addAction(
                 NotificationCompat.Action.Builder(
                     android.R.drawable.ic_lock_idle_alarm,
@@ -130,6 +138,27 @@ class AlarmRingingService : Service() {
             )
             .setFullScreenIntent(contentPending, true)
             .build()
+    }
+
+    private fun buildContentView(layoutRes: Int, time: Long, label: String): android.widget.RemoteViews {
+        val views = android.widget.RemoteViews(packageName, layoutRes)
+        views.setTextViewText(R.id.alarm_title, "ALARM")
+        views.setTextViewText(
+            R.id.alarm_time,
+            java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+                .format(java.util.Date(time))
+        )
+        views.setTextViewText(R.id.alarm_label, label)
+        return views
+    }
+
+    private fun bindButtons(
+        views: android.widget.RemoteViews,
+        snoozePending: PendingIntent,
+        dismissPending: PendingIntent
+    ) {
+        views.setOnClickPendingIntent(R.id.btn_snooze, snoozePending)
+        views.setOnClickPendingIntent(R.id.btn_dismiss, dismissPending)
     }
 
     private fun buildActionPending(action: String): PendingIntent {
