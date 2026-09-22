@@ -123,20 +123,6 @@ class AlarmRingingService : Service() {
             .setCustomContentView(collapsedView)
             .setCustomBigContentView(bigView)
             .setCustomHeadsUpContentView(collapsedView)
-            .addAction(
-                NotificationCompat.Action.Builder(
-                    android.R.drawable.ic_lock_idle_alarm,
-                    "SNOOZE",
-                    snoozePending
-                ).build()
-            )
-            .addAction(
-                NotificationCompat.Action.Builder(
-                    android.R.drawable.ic_menu_close_clear_cancel,
-                    "DISMISS",
-                    dismissPending
-                ).build()
-            )
             .setFullScreenIntent(contentPending, true)
             .build()
     }
