@@ -50,6 +50,20 @@ class OverlayAlarmReceiver : BroadcastReceiver() {
             .setContentIntent(fullScreenPending)
             .setCustomContentView(collapsedView)
             .setCustomBigContentView(bigView)
+            .addAction(
+                NotificationCompat.Action.Builder(
+                    android.R.drawable.ic_lock_idle_alarm,
+                    "SNOOZE",
+                    snoozePending
+                ).build()
+            )
+            .addAction(
+                NotificationCompat.Action.Builder(
+                    android.R.drawable.ic_menu_close_clear_cancel,
+                    "DISMISS",
+                    dismissPending
+                ).build()
+            )
 
         // Always launch the full-screen alarm popup (not a heads-up toast),
         // regardless of the screen/lock state. AlarmActivity plays the sound.
