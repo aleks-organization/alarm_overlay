@@ -45,27 +45,27 @@
         <TextView
             android:id="@+id/btn_snooze"
             android:layout_width="0dp"
-            android:layout_height="64dp"
+            android:layout_height="72dp"
             android:layout_weight="1"
             android:layout_marginEnd="8dp"
             android:background="@drawable/alarm_btn_snooze"
             android:gravity="center"
             android:text="SNOOZE"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/btn_dismiss"
             android:layout_width="0dp"
-            android:layout_height="64dp"
+            android:layout_height="72dp"
             android:layout_weight="1"
             android:layout_marginStart="8dp"
             android:background="@drawable/alarm_btn_dismiss"
             android:gravity="center"
             android:text="DISMISS"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold" />
     </LinearLayout>
 </LinearLayout>
