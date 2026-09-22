@@ -83,7 +83,6 @@ class AlarmRingingService : Service() {
         startForeground(NOTIF_ID, buildNotification())
 
         startAlarmSound()
-        launchAlarmActivity()
 
         return START_STICKY
     }
@@ -129,6 +128,7 @@ class AlarmRingingService : Service() {
                     dismissPending
                 ).build()
             )
+            .setFullScreenIntent(contentPending, true)
             .build()
     }
 
@@ -158,22 +158,6 @@ class AlarmRingingService : Service() {
             this, alarmId, activityIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or immutableFlag()
         )
-    }
-
-    private fun launchAlarmActivity() {
-        try {
-            val intent = Intent(this, AlarmActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                putExtra("alarm_id", alarmId)
-                putExtra("alarm_time", alarmTime)
-                putExtra("alarm_label", alarmLabel)
-                putExtra("alarm_sound", alarmSound)
-                putExtra("alarm_volume", alarmVolume)
-            }
-            startActivity(intent)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
     }
 
     private fun startAlarmSound() {
