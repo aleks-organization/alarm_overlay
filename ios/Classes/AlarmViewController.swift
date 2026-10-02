@@ -271,15 +271,39 @@ import Flutter
             print("Error configuring audio session: \(error)")
         }
 
-        let soundFile = alarmSound ?? "over_the_horizon"
-        let soundName = (soundFile as NSString).deletingPathExtension
-
-        guard let url = Bundle.main.url(forResource: soundName, withExtension: "mp3") ??
-                        Bundle.main.url(forResource: soundName, withExtension: "wav") else {
-            playSystemAlarmSound()
+        if let soundValue = alarmSound, soundValue.hasPrefix("custom:") {
+            let path = String(soundValue.dropFirst("custom:".count))
+            playSound(at: URL(fileURLWithPath: path))
             return
         }
 
+        let soundFile = alarmSound ?? "over_the_horizon"
+        let soundName = (soundFile as NSString).deletingPathExtension
+
+        if let url = Bundle.main.url(forResource: soundName, withExtension: "mp3") ??
+                        Bundle.main.url(forResource: soundName, withExtension: "wav") ??
+                        librarySoundsUrl(forName: soundName) {
+            playSound(at: url)
+            return
+        }
+
+        playSystemAlarmSound()
+    }
+
+    private func librarySoundsUrl(forName name: String) -> URL? {
+        guard let library = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first else {
+            return nil
+        }
+        let base = library.appendingPathComponent("Sounds").appendingPathComponent(name)
+        for url in [base.appendingPathExtension("mp3"), base.appendingPathExtension("wav"), base] {
+            if FileManager.default.fileExists(atPath: url.path) {
+                return url
+            }
+        }
+        return nil
+    }
+
+    private func playSound(at url: URL) {
         do {
             audioPlayer = try AVAudioPlayer(contentsOf: url)
             audioPlayer?.numberOfLoops = -1

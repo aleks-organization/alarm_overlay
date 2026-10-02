@@ -131,8 +131,8 @@ public class AlarmOverlayPlugin: NSObject, FlutterPlugin {
         let content = UNMutableNotificationContent()
         content.title = "Alarm"
         content.body = label
-        if let soundFile = sound, !soundFile.isEmpty {
-            content.sound = UNNotificationSound(named: UNNotificationSoundName(rawValue: soundFile))
+        if let soundName = notificationSoundName(from: sound), !soundName.isEmpty {
+            content.sound = UNNotificationSound(named: UNNotificationSoundName(rawValue: soundName))
         } else {
             content.sound = UNNotificationSound.default
         }
@@ -166,6 +166,17 @@ public class AlarmOverlayPlugin: NSObject, FlutterPlugin {
         }
 
         saveAlarm(id: id, timeMillis: timeMillis, label: label, sound: sound)
+    }
+
+    /// Resolves the file name (last path component) for custom sounds stored in
+    /// `Library/Sounds`, so `UNNotificationSound(named:)` can find them in the
+    /// app container. Built-in sounds are used as-is.
+    private func notificationSoundName(from sound: String?) -> String? {
+        guard let sound = sound, !sound.isEmpty else { return nil }
+        let prefix = "custom:"
+        guard sound.hasPrefix(prefix) else { return sound }
+        let path = String(sound.dropFirst(prefix.count))
+        return (path as NSString).lastPathComponent
     }
 
     private func cancelAlarm(id: Int) {

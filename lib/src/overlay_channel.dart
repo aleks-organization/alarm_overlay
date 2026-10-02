@@ -50,8 +50,10 @@ class AlarmOverlay {
   /// [id] - unique alarm identifier
   /// [when] - DateTime of when the alarm should trigger
   /// [label] - optional label displayed on the overlay
-  /// [sound] - optional sound filename (without extension). Must be in the
-  ///   app's assets (Android) or bundle (iOS). Falls back to system default.
+  /// [sound] - optional sound filename (without extension) for built-in
+  ///   sounds (Android assets / iOS bundle), or a `custom:`-prefixed absolute
+  ///   path to a user-provided file in app-private storage. Falls back to
+  ///   system default.
   /// [volume] - optional alarm volume as a fraction of the max (0.0 - 1.0).
   ///   Defaults to 1.0 (full alarm volume).
   static Future<void> schedule(

@@ -200,9 +200,15 @@ class AlarmRingingService : Service() {
                 player.setAudioStreamType(AudioManager.STREAM_ALARM)
             }
 
-            val soundFile = alarmSound ?: "over_the_horizon.mp3"
-            val afd = assets.openFd(soundFile)
-            player.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+            val soundValue = alarmSound ?: "over_the_horizon.mp3"
+            if (soundValue.startsWith("custom:")) {
+                // User-provided sound stored in app-private storage.
+                val filePath = soundValue.removePrefix("custom:")
+                player.setDataSource(filePath)
+            } else {
+                val afd = assets.openFd(soundValue)
+                player.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+            }
             player.prepare()
             player.isLooping = true
             player.start()
